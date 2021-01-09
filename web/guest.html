@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>顾客信息</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/toast.min.css">
+	<script src="./js/jquery.min.js"></script>
+	<script src="./js/popper.min.js"></script>
+    <script src="./js/bootstrap.min.js"></script>
+    <script src="./js/toast.min.js"></script>
+    <script src="./js/vue.js"></script>
+    <script src="./js/axios.min.js"></script>
+    <script src="./js/utils.js"></script>
+</head>
+<body>
+<style>
+.borderrow {
+	width: 80%;
+    margin-top: 25px;
+    padding: 20px;
+    border: solid 2px grey;
+    border-radius: 10px;
+    box-shadow: darkgrey 10px 10px 30px 5px;
+}
+</style>
+<div class="container-fluid" id="app">
+	<div class="row justify-content-center">
+	<div class="row borderrow">
+		<div class="col-md-12">
+			<ul class="nav">
+				<li class="nav-item">
+					<a class="nav-link active" href="index.html">首页</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="order.html">预定与取消</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link">顾客信息</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="room.html">增删房间</a>
+				</li>
+				<li class="nav-item dropdown ml-md-auto">
+					<a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" data-toggle="dropdown">用户：{{username}}</a>
+					<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+						<button class="dropdown-item" @click="logOut">登出</button>   
+					</div>
+				</li>
+			</ul>
+		</div>
+	</div>
+	</div>
+	<div class="row justify-content-center">
+	<div class="row borderrow">
+		<div class="col-md-12">
+			<div class="row">
+				<div class="tabbable col-md-12">
+					<ul class="nav nav-tabs">
+						<li class="nav-item">
+							<a class="nav-link active show" href="#tabGuest" data-toggle="tab" @click="entityType(false)">个人</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#tabTeam" data-toggle="tab" @click="entityType(true)">团队</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="row" style="margin-top: 15px;">
+				<div class="tab-content col-md-12" style="padding-right: 0px;">
+					<div class="row">
+						<div class="tab-pane fade show active row col-md-12" id="tabGuest" style="padding-right: 0px;">
+							<div class="col-md-4">
+								<div class="form-group">
+									<label for="guestName">顾客姓名</label>
+									<input type="text" class="form-control" id="guestName" maxlength="24"
+									v-model="newEntity.detail.guestName" placeholder="姓名" />
+								</div>
+							</div>
+							<div class="col-md-2">
+								<div class="form-group">
+									<label>顾客性别</label>
+									<div style="display: flex; margin-top: 5px;">
+										<div class="radio">
+											<label>
+												<input type="radio" name="guestSex" value="1"
+												v-model.number="newEntity.detail.guestSex">&nbsp;男性
+											</label>
+										</div>
+										<div class="radio" style="margin-left: 25%;">
+											<label>
+												<input type="radio" name="guestSex" value="0"
+												v-model.number="newEntity.detail.guestSex">&nbsp;女性
+											</label>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-2">
+								<div class="form-group">
+									<label for="guestAge">顾客年龄</label>
+									<input type="number" class="form-control" id="guestAge" min="0" max="120"
+									v-model.number="newEntity.detail.guestAge" placeholder="年龄"/>
+								</div>
+							</div>
+							<div class="col-md-4">
+								<button class="btn btn-default btn-secondary btn-block" style="margin-top: 2em;"
+								@click="confirmNewEntity">
+									添加顾客信息
+								</button>
+							</div>
+						</div>
+						<div class="tab-pane fade row col-md-12" id="tabTeam"
+						:style="`padding-right: 0px; position: absolute; z-index: ${newEntity.isTeam ? '99' : '-1'}`">
+							<div class="col-md-4">
+								<div class="form-group">
+									<label for="teamName">团队名字</label>
+									<input type="text" class="form-control" id="teamName" maxlength="24"
+									v-model="newEntity.detail.teamName" placeholder="名字" />
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div class="alert alert-dark" style="margin: 0px; margin-top: 1.5em;">
+									成员：
+									{{pendingTeamGuest.length ?
+										pendingTeamGuest.map(item => item.guestName).join('，') :
+										'尚无'}}
+								</div>
+							</div>
+							<div class="col-md-2">
+								<button class="btn btn-default btn-secondary btn-block" style="margin-top: 2em;"
+								data-toggle="modal" data-target="#addGuestModal">
+									添加成员
+								</button>
+							</div>
+							<div class="col-md-2">
+								<button class="btn btn-default btn-primary btn-block" style="margin-top: 2em;"
+								@click="confirmNewEntity">
+									确认团队
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	</div>
+	<!-- 添加团队成员模态框 -->
+    <div class="modal fade" id="addGuestModal">
+        <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">添加团队成员</h4>
+                <button type="button" class="close" @click='closeAddGuestModal' data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="row" style="padding: 10px;">
+                    <div class="col-md-4 alert alert-info" style="margin: 0px;">
+                        输入要添加的客人姓名。
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" id="pendingNameInput" placeholder="名字" style="margin-top: 0.5em;"
+                        v-model="pendingNameInput" @keyup.enter="searchPendingGuest" />
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-primary btn-block" style="margin-top: 0.5em;" @click="searchPendingGuest">
+                            查找
+                        </button>
+                    </div>
+                </div>
+                <div class="row" style="padding: 10px;" v-if="searchGuestList.length">
+                    <h5>找到如下个人信息。</h5>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>
+                                    名字
+                                </th>
+                                <th>
+                                    性别
+                                </th>
+                                <th>
+                                    年龄
+                                </th>
+                                <th style="width: 5em;">
+                                    添加
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in searchGuestList">
+                                <td>
+                                    {{item.guestName}}
+                                </td>
+                                <td>
+                                    {{item.guestSex ? '男' : '女'}}
+                                </td>
+                                <td>
+                                    {{item.guestAge}}
+                                </td>
+                                <td>
+									<button type="button" class="btn btn-primary btn-sm"
+									:disabled="newEntity.detail.guestIdList.indexOf(item.guestId) != -1"
+                                    @click="addPendingGuest(item)" data-dismiss="modal">
+                                        添加
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+				</div>
+			</div>
+			<div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @click='closeAddGuestModal' data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+        </div>
+    </div>
+	<div class="row justify-content-center">
+	<div class="row borderrow">
+		<div class="col-md-4 alert alert-primary" style="margin: 0px;">
+			查找今天正在使用房间的客人/团体。
+		</div>
+		<div class="col-md-4">
+			<input type="text" class="form-control" id="room" placeholder="房间号" style="margin-top: 0.5em;"
+			v-model="roomInput" @keyup.enter="searchGuestByRoom" />
+		</div>
+		<div class="col-md-4">
+			<button type="button" class="btn btn-primary btn-block" style="margin-top: 0.5em;" @click="searchGuestByRoom">
+				查找
+			</button>
+		</div>
+	</div>
+	</div>
+	<div class="row justify-content-center">
+	<div class="row borderrow">
+		<div class="col-md-4 alert alert-info" style="margin: 0px;">
+			按名字查找客人/团体。
+		</div>
+		<div class="col-md-4">
+			<input type="text" class="form-control" id="name" placeholder="名字" style="margin-top: 0.5em;"
+			v-model="nameInput" @keyup.enter="searchGuestByName" />
+		</div>
+		<div class="col-md-4">
+			<button type="button" class="btn btn-primary btn-block" style="margin-top: 0.5em;" @click="searchGuestByName">
+				查找
+			</button>
+		</div>
+	</div>
+	</div>
+	<div class="row justify-content-center">
+	<div class="row borderrow">
+		<div class="col-md-4 alert alert-dark" style="margin: 0px;">
+			按ID查找客人/团体。以G开头为个人ID，以T开头为团体ID。
+		</div>
+		<div class="col-md-4">
+			<input type="text" max="10" class="form-control" id="id" placeholder="ID" style="margin-top: 1em;"
+			v-model="idInput" @keyup.enter="searchGuestById" />
+		</div>
+		<div class="col-md-4">
+			<button type="button" class="btn btn-primary btn-block" style="margin-top: 1em;" @click="searchGuestById">
+				查找
+			</button>
+		</div>
+	</div>
+	</div>
+	<div class="row justify-content-center" v-if="searchType">
+	<div class="row borderrow">
+		<div class="col-md-12">
+			<h3>
+				使用{{searchType == 'room' ? `房间号'${room}'` : (searchType == 'id' ? `ID'${entityId}'` : `名字'${name}'`)}}搜索到如下的客户。
+			</h3>
+			<div class="row" style="padding: 10px;" v-if="guestList.length">
+				<h5>个人</h5>
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th>
+								名字
+							</th>
+							<th>
+								性别
+							</th>
+							<th>
+								年龄
+							</th>
+							<th style="width: 5em;">
+								删除
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="item in guestList">
+							<td>
+								{{item.guestName}}
+							</td>
+							<td>
+								{{item.guestSex ? '男' : '女'}}
+							</td>
+							<td>
+								{{item.guestAge}}
+							</td>
+							<td>
+								<button type="button" class="btn btn-danger btn-sm" @click="deleteGuest(item)">
+									删除
+								</button>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="row" style="padding: 10px;" v-if="teamList.length">
+				<h5>团队</h5>
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th>
+								名字
+							</th>
+							<th>
+								人数
+							</th>
+							<th>
+								成员
+							</th>
+							<th style="width: 5em;">
+								删除
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="item in teamList">
+							<td>
+								{{item.teamName}}
+							</td>
+							<td>
+								{{item.teamSize}}
+							</td>
+							<td>
+								{{item.guestList.map(item => item.guestName).join("，")}}
+							</td>
+							<td>
+								<button type="button" class="btn btn-danger btn-sm" @click="deleteTeam(item)">
+									删除
+								</button>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+	</div>
+</div>
+<script>
+var appVue = new Vue({
+    el: '#app',
+    data: {
+		username: '',
+		newEntity: {isTeam: false, detail: {guestName: '', guestAge: undefined, guestSex: 1}},
+		pendingTeamGuest: [],
+		pendingNameInput: '',
+		searchGuestList: [],
+		roomInput: '',
+		room: '',
+		nameInput: '',
+		name: '',
+		idInput: '',
+		entityId: '',
+		searchType: '',
+		guestList: [],
+		teamList: [],
+    },
+    async mounted() {
+        this.username = await getUserName();
+        if (!this.username) {
+			window.location.href = 'login.html';
+        }
+    },
+    methods: {
+		logOut() {
+			userLogOut();
+			window.location.href = 'login.html';
+		},
+		entityType(isTeam) {
+			if (isTeam) {
+				this.pendingTeamGuest = [];
+				this.newEntity = {isTeam: true, detail: {teamName: '', guestIdList: []}}
+			} else {
+				this.newEntity = {isTeam: false, detail: {guestName: '', guestAge: undefined, guestSex: 1}};
+			}
+		},
+		async searchPendingGuest() {
+			if (!this.pendingNameInput) {
+				$.snack('error', '请输入名字！', 1500);
+				return;
+			}
+			results = await callFunction('getInfoByName', [this.pendingNameInput]);
+			this.searchGuestList = results.filter((item) => !item.isTeam).map((item) => item.detail);
+		},
+		addPendingGuest(item) {
+			$('#addGuestModal').modal('hide');
+			this.newEntity.detail.guestIdList.push(item.guestId);
+			this.pendingTeamGuest.push(item);
+			this.closeAddGuestModal();
+		},
+		closeAddGuestModal() {
+			this.pendingNameInput = '';
+			this.searchGuestList = [];
+		},
+		async confirmNewEntity() {
+			let success;
+			if (this.newEntity.isTeam) {
+				if (!this.newEntity.detail.teamName || this.newEntity.detail.guestIdList.length <= 1) {
+					$.snack('error', '请确保已输入团队名且团队人数大于1人。')
+					return;
+				}
+				success = await callFunction('createTeam', [this.newEntity.detail.teamName, this.newEntity.detail.guestIdList]);
+				this.pendingTeamGuest = [];
+				this.newEntity = {isTeam: true, detail: {teamName: '', guestIdList: []}}
+			} else {
+				if (!this.newEntity.detail.guestName || !this.newEntity.detail.guestAge || 
+					this.newEntity.detail.guestAge < 0 || this.newEntity.detail.guestAge > 120) {
+					return;
+				}
+				success = await callFunction('createGuest',
+					[this.newEntity.detail.guestName, this.newEntity.detail.guestSex, this.newEntity.detail.guestAge]);
+				this.newEntity = {isTeam: false, detail: {guestName: '', guestAge: undefined, guestSex: 1}};
+			}
+			if (success) {
+				$.snack('success', '信息已添加成功。', 1500);
+			} else {
+				$.snack('error', '信息添加失败！', 1500);
+			}
+		},
+		async searchGuestByRoom() {
+			if (!this.roomInput) {
+				$.snack('error', '请输入房间号！', 1500);
+				return;
+			}
+			results = await callFunction('getGuestByRoom', [this.roomInput]);
+			this.room = this.roomInput;
+			this.guestList = results.filter((item) => !item.isTeam).map((item) => item.detail);
+            this.teamList = results.filter((item) => item.isTeam).map((item) => item.detail);
+			this.searchType = 'room';
+		},
+		async searchGuestByName() {
+			if (!this.nameInput) {
+				$.snack('error', '请输入名字！', 1500);
+				return;
+			}
+			results = await callFunction('getInfoByName', [this.nameInput]);
+			this.name = this.nameInput;
+			this.guestList = results.filter((item) => !item.isTeam).map((item) => item.detail);
+            this.teamList = results.filter((item) => item.isTeam).map((item) => item.detail);
+			this.searchType = 'name';
+		},
+		async searchGuestById() {
+			if (this.idInput.length < 2) {
+				$.snack('error', '请正确输入ID！', 1500);
+				return;
+			}
+			let type = this.idInput[0];
+			let id = Number(this.idInput.slice(1));
+			if ((type != 'G' && type != 'T') || Number.isNaN(id)) {
+				$.snack('error', '请正确输入ID！', 1500);
+				return;
+			}
+			if (type == 'G') {
+				result = await callFunction('getGuestInfo', [id]);
+				this.guestList = result.guestId ? [result] : [];
+				this.teamList = [];
+			} else {
+				result = await callFunction('getTeamInfo', [id]);
+				this.guestList = [];
+				this.teamList = result.teamId ? [result] : [];
+			}
+			this.entityId = this.idInput;
+			this.searchType = 'id';
+		},
+		async deleteGuest(guest) {
+			let success = await callFunction('deleteGuest', [guest.guestId]);
+			if (success) {
+				$.snack('success', '信息删除成功。', 1500);
+			} else {
+				$.snack('error', '信息删除失败！', 1500);
+			}
+			this.searchType =  '';
+			this.guestList = [];
+			this.teamList = [];
+		},
+		async deleteTeam(team) {
+			let success = await callFunction('deleteTeam', [team.teamId]);
+			if (success) {
+				$.snack('success', '信息删除成功。', 1500);
+			} else {
+				$.snack('error', '信息删除失败！', 1500);
+			}
+			this.searchType =  '';
+			this.guestList = [];
+			this.teamList = [];
+		}
+    }
+})
+</script>
+</body>
+</html>

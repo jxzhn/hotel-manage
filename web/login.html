@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>登录</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+    <!--script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script-->
+    <!--script src="https://cdn.staticfile.org/popper.js/1.15.0/umd/popper.min.js"></script-->
+    <!--script src="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script-->
+    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="./js/utils.js"></script>
+</head>
+
+<body>
+<style>
+.col-center-block {
+    position: absolute;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    -moz-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    -o-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+.loginform {
+    margin-top: 25px;
+    padding: 20px;
+    border: solid 2px grey;
+    border-radius: 10px;
+    box-shadow: darkgrey 10px 10px 30px 5px;
+}
+</style>
+<div class="container" id="app">
+	<div class="row justify-content-center">
+		<div class="col-md-4 column col-center-block" v-if="!logined">
+            <div class="alert alert-info" v-if="!errmsg">
+                您尚未登录。请先登录。
+            </div>
+            <div class="alert alert-danger" v-else>
+                {{errmsg}}
+            </div>
+			<div role="form" class='loginform'>
+				<div class="form-group">
+                     <label for="username">用户名</label>
+                     <input type="text" class="form-control" id="username" v-model="username" />
+				</div>
+				<div class="form-group">
+                     <label for="password">密码</label>
+                     <input type="password" class="form-control" id="password" v-model="password" @keyup.enter="goLogin" />
+				</div>
+				<button class="btn btn-default btn-success btn-block" @click="goLogin">登录</button>
+			</div>
+        </div>
+        <div class="col-md-4 column col-center-block" v-else>
+            <div class="alert alert-success">
+                您已登录用户{{username}}！
+            </div>
+		</div>
+	</div>
+</div>
+<script>
+var appVue = new Vue({
+    el: '#app',
+    data: {
+        logined: false, // 是否已经登录
+        errmsg: '',
+        username: '',
+        password: '',
+    },
+    async mounted() {
+        this.username = await getUserName();
+        this.logined = Boolean(this.username);
+    },
+    methods: {
+        async goLogin() {
+            if (!this.username || !this.password) {
+                this.errmsg = '请先输入用户名和密码！';
+                return;
+            }
+            if (await userLogin(this.username, this.password)) {
+                window.location.href = 'index.html';
+            } else {
+                console.log('login failed.');
+                this.errmsg = '登陆失败。请检查用户名和密码。'
+            }
+        }
+    }
+})
+</script>
+</body>
+</html>

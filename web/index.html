@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>首页</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+	<script src="./js/jquery.min.js"></script>
+	<script src="./js/popper.min.js"></script>
+    <script src="./js/bootstrap.min.js"></script>
+    <script src="./js/vue.js"></script>
+    <script src="./js/axios.min.js"></script>
+    <script src="./js/utils.js"></script>
+</head>
+<body>
+<style>
+.borderrow {
+	width: 80%;
+    margin-top: 25px;
+    padding: 20px;
+    border: solid 2px grey;
+    border-radius: 10px;
+    box-shadow: darkgrey 10px 10px 30px 5px;
+}
+</style>
+<div class="container-fluid" id="app">
+	<div class="row justify-content-center">
+	<div class="row borderrow">
+		<div class="col-md-12">
+			<ul class="nav">
+				<li class="nav-item">
+					<a class="nav-link active">首页</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="order.html">预定与取消</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="guest.html">顾客信息</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="room.html">增删房间</a>
+				</li>
+				<li class="nav-item dropdown ml-md-auto">
+					<a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" data-toggle="dropdown">用户：{{username}}</a>
+					<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+						<button class="dropdown-item" @click="logOut">登出</button>  
+					</div>
+				</li>
+			</ul>
+		</div>
+	</div>
+	</div>
+	<div class="row justify-content-center">
+	<div class="row borderrow">
+		<div class="col-md-6">
+			<h3>
+				今日已被订
+			</h3>
+			<table class="table">
+				<thead>
+					<tr>
+						<th>
+							房间号
+						</th>
+						<th>
+							房间价格
+						</th>
+						<th>
+							房间类型
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr class="table-success" v-for="item in todayRoom.filled">
+						<td>
+							{{item.roomId}}
+						</td>
+						<td>
+							￥{{item.roomPrice}}
+						</td>
+						<td>
+							{{item.roomType}}
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="col-md-6">
+			<h3>
+				今日未被订
+			</h3>
+			<table class="table">
+				<thead>
+					<tr>
+						<th>
+							房间号
+						</th>
+						<th>
+							房间价格
+						</th>
+						<th>
+							房间类型
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr class="table-warning" v-for="item in todayRoom.empty">
+						<td>
+							{{item.roomId}}
+						</td>
+						<td>
+							￥{{item.roomPrice}}
+						</td>
+						<td>
+							{{item.roomType}}
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	</div>
+	<div class="row justify-content-center">
+	<div class="row borderrow">
+		<div class="col-md-4">
+			<h2>
+				过去
+			</h2>
+			<p>
+				过去七天，共有 {{summary.pastWeek}} 张订单。 <br />
+				不要埋首于远昔的过去，把握现在吧。
+			</p>
+		</div>
+		<div class="col-md-4">
+			<h2>
+				今天
+			</h2>
+			<p>
+				今天，共有 {{summary.today}} 张订单。 <br />
+				如今逗乐我们的一切都曾是某种危急关头。
+			</p>
+		</div>
+		<div class="col-md-4">
+			<h2>
+				未来
+			</h2>
+			<p>
+				未来七天，已经有 {{summary.futureWeek}} 张订单。 <br/>
+				往者不可谏，来者尤可追。
+			</p>
+		</div>
+	</div>
+	</div>
+	<div class="row justify-content-center">
+	<div class="row borderrow">
+		<div class="col-md-12">
+			<h3>
+				让我们来看看订单吧。
+			</h3>
+			<table class="table">
+				<thead>
+					<tr>
+						<th>
+							订单号
+						</th>
+						<th>
+							房间号
+						</th>
+						<th>
+							个人/团体ID
+						</th>
+						<th>
+							起始日期
+						</th>
+						<th>
+							终止日期
+						</th>
+						<th>
+							状态
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="item in orders" :class="['', 'table-danger', 'table-success'][item.orderStatus]">
+						<td>
+							{{item.orderId}}
+						</td>
+						<td>
+							{{item.roomId}}
+						</td>
+						<td>
+							{{item.teamId ? `T${item.teamId}` : `G${item.guestId}`}}
+						</td>
+						<td>
+							{{item.startDate}}
+						</td>
+						<td>
+							{{item.endDate}}
+						</td>
+						<td>
+							{{['正常', '已取消', '已付款'][item.orderStatus]}}
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	</div>
+</div>
+<script>
+var appVue = new Vue({
+    el: '#app',
+    data: {
+		username: '',
+		todayRoom: {empty: [], filled: []},
+		summary: {pastWeek: 0, today: 0, futureWeek: 0},
+		orders: [],
+    },
+    async mounted() {
+        this.username = await getUserName();
+        if (!this.username) {
+			window.location.href = 'login.html';
+			return;
+		}
+		this.todayRoom = await callFunction('getTodayRoomDetail', []);
+		this.summary = await callFunction('countOrders', []);
+		this.orders = await callFunction('getOrders', []);
+    },
+    methods: {
+		logOut() {
+			userLogOut();
+			window.location.href = 'login.html';
+		}
+    }
+})
+</script>
+</body>
+</html>
