@@ -413,7 +413,7 @@ var appVue = new Vue({
 			let success;
 			if (this.newEntity.isTeam) {
 				if (!this.newEntity.detail.teamName || this.newEntity.detail.guestIdList.length <= 1) {
-					$.snack('error', '请确保已输入团队名且团队人数大于1人。')
+					$.snack('error', '请确保已输入团队名且团队人数大于1人！', 1500)
 					return;
 				}
 				success = await callFunction('createTeam', [this.newEntity.detail.teamName, this.newEntity.detail.guestIdList]);
@@ -422,6 +422,7 @@ var appVue = new Vue({
 			} else {
 				if (!this.newEntity.detail.guestName || !this.newEntity.detail.guestAge || 
 					this.newEntity.detail.guestAge < 0 || this.newEntity.detail.guestAge > 120) {
+					$.snack('error', '请确保已输入顾客姓名和正确的年龄！', 1500)
 					return;
 				}
 				success = await callFunction('createGuest',
