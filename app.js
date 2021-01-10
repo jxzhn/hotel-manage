@@ -69,7 +69,7 @@ app.all('/callFunction', async (req, res) => {
     let reqData = getReqData(req);
     console.log(`call function from ip ${req.ip}, params: ${JSON.stringify(reqData)}.`);
 
-    if (!reqData.uuid || !reqData.method || !reqData.parameters) {
+    if (!reqData.uuid || !reqData.method || !reqData.parameters || !Array.isArray(reqData.parameters)) {
         console.log('wrong request format.');
         res.json({ok: false, errmsg: 'Wrong request format.'});
         return;
