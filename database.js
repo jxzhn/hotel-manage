@@ -503,7 +503,7 @@ async function getGuestByRoom(roomId) {
                 }
                 var checkTeam = Boolean(result[0]['teamId']);
                 delete result[0].startDate; delete result[0].endDate; delete result[0].orderStatus;
-                if (checkTeam){
+                if (checkTeam && !Boolean(result[0]['teamId'])){
                     delete result[0]['guestId']; delete result[0]['guestName']; 
                     delete result[0]['guestSex']; delete result[0]['guestAge'];
                     teamInfo = await getTeamInfo(result[0]['teamId']);
