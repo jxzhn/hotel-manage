@@ -1,11 +1,11 @@
+create user 'hotel'@'localhost';
+
+alter user 'hotel'@'localhost' identified with mysql_native_password;
+alter user 'hotel'@'localhost' identified by '$money$is!not!everything';
+
 create database hotel
 default character set utf8 
 default collate utf8_general_ci;
-
-create user 'hotel'@'localhost';
-
-alter user 'hotel'@'localhost'
-identified with mysql_native_password by '$money$is!not!everything';
 
 create table hotel.guest(
     guestId int unsigned auto_increment,
@@ -18,10 +18,15 @@ create table hotel.guest(
 
 create table hotel.team(
     teamId int unsigned auto_increment,
-    guestId int unsigned,
     teamName varchar(25),
-    teamSize smallint unsigned,
+    primary key (teamId)
+);
+
+create table hotel.teamGuest(
+    teamId int unsigned,
+    guestId int unsigned,
     primary key (teamId, guestId),
+    foreign key (teamId) references team(teamId),
     foreign key (guestId) references guest(guestId)
 );
 

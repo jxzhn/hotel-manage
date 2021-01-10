@@ -210,7 +210,7 @@
                                     {{item.detail.teamName}}
                                 </td>
                                 <td>
-                                    {{item.detail.teamSize}}
+                                    {{item.detail.guestList.length}}
                                 </td>
                                 <td>
                                     {{item.detail.guestList.map(item => item.guestName).join("，")}}
@@ -318,7 +318,7 @@
                                 {{item.detail.teamName}}
                             </td>
                             <td>
-                                {{item.detail.teamSize}}
+                                {{item.detail.guestList.length}}
                             </td>
                             <td>
                                 {{item.detail.guestList.map(item => item.guestName).join("，")}}
