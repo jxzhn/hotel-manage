@@ -24,11 +24,11 @@ async function getGuestInfo(guestId) {
     }).catch((mess) => {return mess;});
 };
 
-// 返回团队信息对象，格式：{teamId, teamName, guestList: [{guestId, guestName, guestSex, guestAge}, ...]}
+// 返回团队信息对象，格式：{teamId, teamName, guestList: [{guestId, guestName, guestSex, guestAge, teamId}, ...]}
 async function getTeamInfo(teamId) {
     return new Promise((resolve, reject) => { 
         connection.query('select * \
-                          from team natural join guest \
+                          from (team natural join teamGuest) natural join guest \
                           where teamId = ?;', [teamId], (error, result, fields) => {
             if (error) {
                 reject(error);
@@ -91,7 +91,7 @@ async function getTeamInfoByName(name) {
     return new Promise((resolve, reject) => { 
         Name = '%' + name + '%';
         connection.query("select * \
-                          from team \
+                          from team natural join teamGuest \
                           where teamName like ? ;", [Name], async (error, result, fields) => {
             if (error) {
                 reject(error);
@@ -304,9 +304,9 @@ async function createTeam(name, guestIdList)
     post = [];
     for(var i = 0;i < guestIdList.length;i++)
     {
-        sql += "(?,?,?,?)";
+        sql += "(?,?,?)";
         sql += (i < guestIdList.length - 1)?",":";";
-        post.push(teamId,guestIdList[i],name,guestIdList.length);
+        post.push(teamId,guestIdList[i],name);
     }
     return new Promise((resolve,reject) => {
         connection.query(sql,post,(error,results,fields) => {
