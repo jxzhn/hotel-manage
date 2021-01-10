@@ -191,10 +191,10 @@
 							{{item.teamId ? `T${item.teamId}` : `G${item.guestId}`}}
 						</td>
 						<td>
-							{{item.startDate}}
+							{{new Date(item.startDate).format("yyyy-MM-dd")}}
 						</td>
 						<td>
-							{{item.endDate}}
+							{{new Date(item.endDate).format("yyyy-MM-dd")}}
 						</td>
 						<td>
 							{{['正常', '已取消', '已付款'][item.orderStatus]}}
