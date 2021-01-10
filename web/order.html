@@ -381,10 +381,10 @@
                                     {{item.roomId}}
                                 </td>
                                 <td>
-                                    {{item.startDate}}
+                                    {{new Date(item.startDate).format("yyyy-MM-dd")}}
                                 </td>
                                 <td>
-                                    {{item.endDate}}
+                                    {{new Date(item.endDate).format("yyyy-MM-dd")}}
                                 </td>
                                 <td>
                                     <button type="button" class="btn btn-success btn-sm" :disabled="item.orderStatus == 2" @click="payOrder(item)">
