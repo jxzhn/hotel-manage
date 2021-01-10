@@ -24,7 +24,7 @@ async function getGuestInfo(guestId) {
     }).catch((mess) => {return mess;});
 };
 
-// 返回团队信息对象，格式：{teamId, teamName, teamSize, guestList: [{guestId, guestName, guestSex, guestAge}, ...]}
+// 返回团队信息对象，格式：{teamId, teamName, guestList: [{guestId, guestName, guestSex, guestAge}, ...]}
 async function getTeamInfo(teamId) {
     return new Promise((resolve, reject) => { 
         connection.query('select * \
@@ -39,15 +39,13 @@ async function getTeamInfo(teamId) {
                 }
                 tid = result[0]['teamId'];
                 tname = result[0]['teamName'];
-                tsize = result[0]['teamSize'];
                 var glist = [];
                 for(var i = 0; i < result.length; i++) {
-                    delete result[i]['teamId']; delete result[i]['teamName']; delete result[i]['teamSize'];
+                    delete result[i]['teamId']; delete result[i]['teamName'];
                     glist.push(result[i]);
                 };
                 resolve({teamId: tid,
                          teamName: tname,
-                         teamSize: tsize,
                          guestList: glist});
             };
         });
@@ -80,7 +78,7 @@ async function getGuestInfoByName(name) {
             } else {
                 r = [];
                 for(var i = 0; i<result.length; i++) {
-                    delete result[i]['teamId']; delete result[i]['teamName']; delete result[i]['teamSize'];
+                    delete result[i]['teamId']; delete result[i]['teamName'];
                     r.push({isTeam: false, detail: result[i]});
                 }
                 resolve(r);
@@ -488,10 +486,9 @@ async function getOrders() {
 // 返回今天住在这个房间的客人或团队，返回列表[{isTeam: bool, detail: object}]
 async function getGuestByRoom(roomId) {
     return new Promise((resolve, reject) => { 
-        connection.query('select * \
-                          from hotel.order, guest, team \
-                          where hotel.order.roomId = ? \
-                            and (order.guestId = guest.guestId or order.teamId = team.teamId) \
+        connection.query('select guestId, teamId\
+                          from hotel.order \
+                          where roomId = ? \
                             and current_date() >= startDate \
                             and current_date() < endDate;', [roomId], async (error, result, fields) => {
             if (error) {
@@ -501,21 +498,23 @@ async function getGuestByRoom(roomId) {
                     resolve([]);
                     return;
                 }
-                var checkTeam = Boolean(result[0]['teamId']);
-                delete result[0].startDate; delete result[0].endDate; delete result[0].orderStatus;
+                var checkTeam = result[0]['teamId'] != null;
+                var d = {};
                 if (checkTeam){
-                    delete result[0]['guestId']; delete result[0]['guestName']; 
-                    delete result[0]['guestSex']; delete result[0]['guestAge'];
-                    teamInfo = await getTeamInfo(result[0]['teamId']);
-                    result[0]['guestList'] = teamInfo['guestList'];
+                    d = await getTeamInfo(result[0]['teamId']);
                 } else {
-                    delete result[0]['teamId']; delete result[0]['teamName']; delete result[0]['teamSize'];
+                    res = await getGuestInfo(result[0]['guestId']);
+                    d['guestId'] = res['guestId'];
+                    d['guestName'] = res['guestName'];
+                    d['guestSex'] = res['guestSex'];
+                    d['guestAge'] = res['guestAge'];
                 }
-                resolve([{isTeam: checkTeam, detail: result[0]}]);
+                resolve([{isTeam: checkTeam, detail: d}]);
             };
         });
     }).catch((mess) => {return mess;});
 };
+
 
 async function getRoomInfoById(roomId) {
     return new Promise((resolve, reject) => {
