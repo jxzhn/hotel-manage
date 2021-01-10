@@ -1,0 +1,30 @@
+{
+  "name": "hotel-manage",
+  "version": "1.0.0",
+  "description": "Hotel Manage System",
+  "main": "app.js",
+  "dependencies": {
+    "express": "^4.17.1",
+    "body-parser": "^1.19.0",
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jxzhn/hotel-manage.git"
+  },
+  "keywords": [
+    "Hotel",
+    "MySQL",
+    "Web"
+  ],
+  "author": "jxzhn",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jxzhn/hotel-manage/issues"
+  },
+  "homepage": "https://github.com/jxzhn/hotel-manage#readme"
+}
