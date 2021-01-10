@@ -233,8 +233,6 @@ async function createGuest(name, sex, age)
 {
     sql = 'insert into hotel.guest values(0,?,?,?) ;';
     post = [name,sex,age];
-    //sql = 'insert into hotel.guest set';
-    //post = {guestName:name,guestSex:sex,guestAge:age};
     return new Promise((resolve,reject) => {
         connection.query(sql,post,(error,results,fields) => {
             if(error){
@@ -250,7 +248,7 @@ async function createGuest(name, sex, age)
 async function deleteGuest(guestId)
 {
     sql1 = ' delete from hotel.order where guestId = ? ;';
-    sql2 = ' delete from hotel.team where guestId = ? ;';
+    sql2 = ' delete from hotel.teamGuest where guestId = ? ;'
     sql3 = ' delete from hotel.guest where guestId = ? ;';
     post = [guestId];
     var result1 = await new Promise(
@@ -300,20 +298,30 @@ async function createTeam(name, guestIdList)
                 }
             });
         }).catch((message)=>{console.log(message);return false});
-    sql = 'insert into hotel.team values';
+    var result1 = await new Promise(
+        (resolve,reject) => {
+            connection.query("insert into hotel.team values(?,?);",[teamId,name],(error,results,fields) => {
+                if(error){
+                    reject(error);
+                } else{
+                    resolve(true);
+                }
+            });
+        }).catch((message)=>{console.log(message);return false});
+    sql = 'insert into hotel.teamGuest values ';
     post = [];
     for(var i = 0;i < guestIdList.length;i++)
     {
-        sql += "(?,?,?)";
+        sql += "(?,?)";
         sql += (i < guestIdList.length - 1)?",":";";
-        post.push(teamId,guestIdList[i],name);
+        post.push(teamId,guestIdList[i]);
     }
     return new Promise((resolve,reject) => {
         connection.query(sql,post,(error,results,fields) => {
             if(error){
                 reject(error);
             } else{
-                resolve(true);
+                resolve(true && result1);
             }
         });
     }).catch((message)=>{console.log(message);return false});
@@ -321,12 +329,23 @@ async function createTeam(name, guestIdList)
 
 async function deleteTeam(teamId)
 {
+    teamInfo = await getTeamInfo(teamId);
+    guestList = teamInfo["guestList"];
     sql1 = ' delete from hotel.order where teamId = ? ;';
-    sql2 = ' delete from hotel.team where teamId = ? ;';
-    post = [teamId]
+    sql2 = ' delete from hotel.teamGuest where teamId = ? ;';
+    sql3 = ' delete from hotel.guest where ';
+    sql4 = ' delete from hotel.team where teamId = ? ;';
+    post1 = [teamId]
+    post2 = []
+    for(var i = 0;i < guestList.length;i++)
+    {
+        sql3 += "guestId = ? ";
+        sql3 += (i == guestList.length - 1)?";":"or ";
+        post2.push(guestList[i]["guestId"]);
+    }
     var result1 = await new Promise(
         (resolve,reject) => {
-            connection.query(sql1,post,(error,results,fields) => {
+            connection.query(sql1,post1,(error,results,fields) => {
                 if(error){
                     reject(error);
                 }
@@ -336,15 +355,39 @@ async function deleteTeam(teamId)
             })
         }
     ).catch((message)=>{console.log("err1:",message);return false;});
+    var result2 = await new Promise(
+        (resolve,reject) => {
+            connection.query(sql2,post1,(error,results,fields) => {
+                if(error){
+                    reject(error);
+                }
+                else{
+                    resolve(true);
+                }
+            })
+        }
+    ).catch((message)=>{console.log("err2:",message);return false;});
+    var result3 = await new Promise(
+        (resolve,reject) => {
+            connection.query(sql3,post2,(error,results,fields) => {
+                if(error){
+                    reject(error);
+                }
+                else{
+                    resolve(true);
+                }
+            })
+        }
+    ).catch((message)=>{console.log("err3:",message);return false;});
     return new Promise((resolve,reject) => {
-        connection.query(sql2,post,(error,results,fields) => {
+        connection.query(sql4,post1,(error,results,fields) => {
             if(error){
                 reject(error);
             } else{
-                resolve(true && result1);
+                resolve(true && result1 && result2 && result3);
             }
         });
-    }).catch((message)=>{console.log("err2:",message);return false;});
+    }).catch((message)=>{console.log("err4:",message);return false;});
 }
 
 async function createGuestOrder(guestId, roomId, startDate, endDate)
